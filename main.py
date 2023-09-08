@@ -61,11 +61,28 @@ def verificar_camino(matrix):
     col = len(matrix[0])
     visited = [False] * row
     dfs(0, matrix, visited)
-
     if all(visited):
         print("El grafo es conexo.")
     else:
         print("El grafo no es conexo.")
+
+
+def dividirSubgrafo(matrix):
+    row = len(matrix)
+    col = len(matrix[0])
+    visited = [False] * row
+    subgrafos = []
+    for i in range(row):
+        if not visited[i]:
+            subgrafo = []
+            dfs(i, matrix, visited)
+            for j in range(row):
+                if visited[j]:
+                    subgrafo.append(j)
+
+            subgrafos.append(subgrafo)
+
+    return subgrafos
 
 
 row = int(input("Ingrese el numero de filas (máximo 5): "))
@@ -88,5 +105,15 @@ if matrix:
     buscar_camino(matrix)
     print("Verificando Caminos...")
     verificar_camino(matrix)
+
+    connected_components = dividirSubgrafo(matrix)
+
+    if connected_components:
+        print("Componentes Conexas:")
+        for i, component in enumerate(connected_components):
+            print(f"Componente {i + 1}: {component}")
+    else:
+        print("El grafo es conexo, no hay componentes separadas.")
+
 else:
     print("La matriz está vacía y no se pueden definir relaciones ni buscar bucles.")
