@@ -1,119 +1,129 @@
-from pickle import FALSE
+import math
+
+import tkinter as tk
+from random import randint
 import random
 
+class GraphApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Graph Visualization")
+        self.root.configure(bg="black")
 
-def creatematrix(row, col):
-    matrix = []
-    for i in range(row):
-        row_vals = []
-        for j in range(col):
-            value = random.randint(0, 1)
-            row_vals.append(value)
-        matrix.append(row_vals)
-    return matrix
+        self.row_label = tk.Label(root, text="Número de Filas (máximo 5):", bg="black", fg="white")
+        self.row_label.pack()
+        self.row_entry = tk.Entry(root)
+        self.row_entry.pack()
 
+        self.col_label = tk.Label(root, text="Número de Columnas (máximo 15):", bg="black", fg="white")
+        self.col_label.pack()
+        self.col_entry = tk.Entry(root)
+        self.col_entry.pack()
 
-def definirRelacion(matrix):
-    row = len(matrix)
-    col = len(matrix[0])
-    for i in range(row):
-        for j in range(col):
-            if matrix[i][j] == 1:
-                print(f"Relación definida para matriz[V{i}][V{j}]: {matrix[i][j]}")
-                print("Son adyacentes")
-            else:
-                print(f"Relación definida para matriz[V{i}][V{j}]: {matrix[i][j]}")
-                print("No son adyacentes")
+        self.create_button = tk.Button(root, text="Crear Matriz", command=self.create_matrix, bg="white", fg="black")
+        self.create_button.pack()
 
+        self.canvas = tk.Canvas(root, width=500, height=500, bg="white")
+        self.canvas.pack()
 
-def buscar_bucles(matrix):
-    row = len(matrix)
-    col = len(matrix[0])
-    for i in range(row):
-        if i < col and matrix[i][i] == 1:
-            print(f"Se forma bucle en [V{i}][V{i}]: {matrix[i][i]}")
+        self.node_radius = 20
+        self.node_positions = {}
+        self.matrix = None
 
+        self.matrix_text = tk.Text(root, height=10, width=30, bg="black", fg="white")
+        self.matrix_text.pack()
 
-def buscar_camino(matrix):
-    row = len(matrix)
-    col = len(matrix[0])
-    for vertex in range(row):
-        connected_vertices = []
-        for j in range(col):
-            if matrix[vertex][j] == 1:
-                connected_vertices.append(j)
-        if len(connected_vertices) == 0:
-            print(f"El vértice {vertex} no está conectado a ningún otro vértice.")
-        else:
-            print(f"El vértice {vertex} está conectado a los vértices: {connected_vertices}")
+    def create_matrix(self):
+        try:
+            row = int(self.row_entry.get())
+            col = int(self.col_entry.get())
 
+            if row > 5:
+                row = 5
+                self.row_entry.delete(0, tk.END)
+                self.row_entry.insert(0, "5")
 
-def dfs(vertex, matrix, visited):
-    visited[vertex] = True
-    row = len(matrix)
-    for j in range(row):
-        if matrix[vertex][j] == 1 and not visited[j]:
-            dfs(j, matrix, visited)
+            if col > 15:
+                col = 15
+                self.col_entry.delete(0, tk.END)
+                self.col_entry.insert(0, "15")
 
+            self.matrix = self.create_matrix_random(row, col)
+            self.clear_canvas()
+            self.draw_graph()
+            self.display_matrix(self.matrix)
 
-def verificar_camino(matrix):
-    row = len(matrix)
-    col = len(matrix[0])
-    visited = [False] * row
-    dfs(0, matrix, visited)
-    if all(visited):
-        print("El grafo es conexo.")
-    else:
-        print("El grafo no es conexo.")
+        except ValueError:
+            self.clear_canvas()
+            self.display_matrix([])  # Limpiar la matriz también
+            self.canvas.create_text(250, 250, text="Ingrese números válidos para filas y columnas.", fill="red")
 
+    def create_matrix_random(self, row, col):
+        matrix = []
+        for i in range(row):
+            row_vals = []
+            for j in range(col):
+                value = random.randint(0, 1)
+                row_vals.append(value)
+            matrix.append(row_vals)
+        return matrix
 
-def dividirSubgrafo(matrix):
-    row = len(matrix)
-    col = len(matrix[0])
-    visited = [False] * row
-    subgrafos = []
-    for i in range(row):
-        if not visited[i]:
-            subgrafo = []
-            dfs(i, matrix, visited)
-            for j in range(row):
-                if visited[j]:
-                    subgrafo.append(j)
+    def draw_graph(self):
+        self.node_positions = {}
 
-            subgrafos.append(subgrafo)
+        if self.matrix:
+            num_rows = len(self.matrix)
+            num_cols = len(self.matrix[0])
 
-    return subgrafos
+            # Crear nodos para todos los vértices en la matriz
+            for i in range(num_rows):
+                x = randint(self.node_radius, self.canvas.winfo_width() - self.node_radius)
+                y = randint(self.node_radius, self.canvas.winfo_height() - self.node_radius)
+                self.node_positions[i] = (x, y)
+                self.canvas.create_oval(x - self.node_radius, y - self.node_radius, x + self.node_radius,
+                                        y + self.node_radius, outline="blue")
 
+                # Agregar letras al centro de los nodos (A, B, C, ...)
+                label = chr(ord('A') + i)
+                self.canvas.create_text(x, y, text=label, fill="blue")
 
-row = int(input("Ingrese el numero de filas (máximo 5): "))
-col = int(input("Ingrese el numero de columnas (máximo 15): "))
-if row > 5 or col > 15:
-    while row > 5 or col > 15:
-        row = int(input("Ingrese de nuevo el numero de filas (máximo 5): "))
-        col = int(input("Ingrese de nuevo el numero de columnas (máximo 15): "))
+            # Dibujar relaciones basadas en la matriz
+            for i in range(num_rows):
+                for j in range(num_cols):
+                    if self.matrix[i][j] == 1:
+                        if i in self.node_positions and j in self.node_positions:
+                            x1, y1 = self.node_positions[i]
+                            x2, y2 = self.node_positions[j]
 
-matrix = creatematrix(row, col)
-print("Matriz generada:")
-for i in range(row):
-    print(matrix[i])
+                            # Calcular el ángulo entre los nodos
+                            angle = math.atan2(y2 - y1, x2 - x1)
 
-if matrix:
-    print("Relaciones definidas:")
-    definirRelacion(matrix)
-    buscar_bucles(matrix)
-    print("MOSTRANDO Caminos entre vertices...")
-    buscar_camino(matrix)
-    print("Verificando Caminos...")
-    verificar_camino(matrix)
+                            # Verificar si es un bucle (apunta a sí mismo)
+                            if i == j:
+                                # Dibujar un círculo en lugar de una flecha
+                                radius = self.node_radius * 0.8
+                                self.canvas.create_oval(x1 - radius, y1 - radius, x1 + radius, y1 + radius,
+                                                        outline="black", width=2)
+                            else:
+                                # Ajustar las coordenadas de inicio y final para que las flechas salgan del borde del círculo
+                                x1 += self.node_radius * math.cos(angle)
+                                y1 += self.node_radius * math.sin(angle)
+                                x2 -= self.node_radius * math.cos(angle)
+                                y2 -= self.node_radius * math.sin(angle)
+                                self.canvas.create_line(x1, y1, x2, y2, fill="black", arrow=tk.LAST)
 
-    connected_components = dividirSubgrafo(matrix)
+    def display_matrix(self, matrix):
+        self.matrix_text.delete(1.0, tk.END)
+        matrix_str = "\n".join(" ".join(map(str, row)) for row in matrix)
+        self.matrix_text.insert(tk.END, "Matriz de Adyacencia:\n" + matrix_str)
 
-    if connected_components:
-        print("Componentes Conexas:")
-        for i, component in enumerate(connected_components):
-            print(f"Componente {i + 1}: {component}")
-    else:
-        print("El grafo es conexo, no hay componentes separadas.")
+    def clear_canvas(self):
+        self.canvas.delete("all")
 
-else:
-    print("La matriz está vacía y no se pueden definir relaciones ni buscar bucles.")
+def main():
+    root = tk.Tk()
+    app = GraphApp(root)
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
