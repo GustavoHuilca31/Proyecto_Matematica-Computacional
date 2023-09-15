@@ -6,6 +6,7 @@ import random
 
 class GraphApp:
     def __init__(self, root):
+        self.matrix = None
         self.root = root
         self.root.title("Graph Visualization")
         self.root.configure(bg="black")
@@ -28,10 +29,13 @@ class GraphApp:
 
         self.node_radius = 20
         self.node_positions = {}
-        self.matrix = None
+
 
         self.matrix_text = tk.Text(root, height=10, width=30, bg="black", fg="white")
         self.matrix_text.pack()
+
+        self.manual_matrix_button = tk.Button(root, text="Ingresar Matriz Manualmente",command=self.create_matrix_manual, bg="white", fg="black")
+        self.manual_matrix_button.pack()
 
     def create_matrix(self):
         try:
@@ -111,6 +115,51 @@ class GraphApp:
                                 x2 -= self.node_radius * math.cos(angle)
                                 y2 -= self.node_radius * math.sin(angle)
                                 self.canvas.create_line(x1, y1, x2, y2, fill="black", arrow=tk.LAST)
+
+    def create_matrix_manual(self):
+        if self.matrix is not None:  # Verificar que self.matrix se haya inicializado
+            # Crear una nueva ventana para que el usuario ingrese manualmente la matriz
+            manual_matrix_window = tk.Toplevel(self.root)
+            manual_matrix_window.title("Ingresar Matriz Manualmente")
+
+            # Crear una cuadrícula de entrada de texto para la matriz
+            manual_matrix_entries = []
+            for i in range(len(self.matrix)):
+                row_entries = []
+                for j in range(len(self.matrix[0])):
+                    entry = tk.Entry(manual_matrix_window, width=5)
+                    entry.grid(row=i, column=j)
+                    row_entries.append(entry)
+                manual_matrix_entries.append(row_entries)
+
+            # Agregar un botón para confirmar y guardar la matriz
+            confirm_button = tk.Button(manual_matrix_window, text="Confirmar",
+                                       command=lambda: self.save_manual_matrix(manual_matrix_entries,
+                                                                               manual_matrix_window))
+            confirm_button.grid(row=len(self.matrix), columnspan=len(self.matrix[0]))
+
+    def save_manual_matrix(self, entries, window):
+        try:
+            manual_matrix = []
+            for row in entries:
+                row_values = []
+                for entry in row:
+                    value = int(entry.get())
+                    row_values.append(value)
+                manual_matrix.append(row_values)
+
+            # Mostrar la matriz ingresada manualmente
+            self.clear_canvas()
+            self.matrix = manual_matrix
+            self.draw_graph()
+            self.display_matrix(self.matrix)
+
+            # Cerrar la ventana de entrada manual
+            window.destroy()
+
+        except ValueError:
+            # Manejar errores de entrada no válida si es necesario
+            pass
 
     def display_matrix(self, matrix):
         self.matrix_text.delete(1.0, tk.END)
