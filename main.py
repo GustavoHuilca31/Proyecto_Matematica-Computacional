@@ -11,12 +11,7 @@ class GraphApp:
         self.root.title("Graph Visualization")
         self.root.configure(bg="black")
 
-        self.row_label = tk.Label(root, text="Número de Filas (máximo 5):", bg="black", fg="white")
-        self.row_label.pack()
-        self.row_entry = tk.Entry(root)
-        self.row_entry.pack()
-
-        self.col_label = tk.Label(root, text="Número de Columnas (máximo 15):", bg="black", fg="white")
+        self.col_label = tk.Label(root, text="Ingrese el valor de n: (mínimo 5 y máximo 15):", bg="black", fg="white")
         self.col_label.pack()
         self.col_entry = tk.Entry(root)
         self.col_entry.pack()
@@ -30,7 +25,6 @@ class GraphApp:
         self.node_radius = 20
         self.node_positions = {}
 
-
         self.matrix_text = tk.Text(root, height=10, width=30, bg="black", fg="white")
         self.matrix_text.pack()
 
@@ -39,20 +33,12 @@ class GraphApp:
 
     def create_matrix(self):
         try:
-            row = int(self.row_entry.get())
-            col = int(self.col_entry.get())
+            n = int(self.col_entry.get())
 
-            if row > 5:
-                row = 5
-                self.row_entry.delete(0, tk.END)
-                self.row_entry.insert(0, "5")
+            if n < 5 or n > 15:
+                raise ValueError
 
-            if col > 15:
-                col = 15
-                self.col_entry.delete(0, tk.END)
-                self.col_entry.insert(0, "15")
-
-            self.matrix = self.create_matrix_random(row, col)
+            self.matrix = self.create_matrix_random(n,n)
             self.clear_canvas()
             self.draw_graph()
             self.display_matrix(self.matrix)
